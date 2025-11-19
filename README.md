@@ -3,15 +3,15 @@ If any used, like any other package...
 
 ## Installation 
 # Step 1 
-Copy the folder `wishlist` to `BallsDex-DiscordBot/ballsdex/packages` directory
+Copy the folder of a chosen package and move it to the `BallsDex-DiscordBot/ballsdex/packages` directory
 
 # Step 2 
-Open the config.yml file scroll down to the list of `packages` and add `ballsdex.packages.wishlist`
+Open the config.yml file scroll down to the list of `packages` and add `ballsdex.packages.insert_package_name`
 
 and ur done!
 
 > [!IMPORTANT]
-> If you have any difficulties or bugs with using this package, contact me on discord @melanutella
+> If you have any difficulties or bugs with using these packages, contact me on discord @melanutella
 
 ## Overview of each package commands
 1. Wishlist package
@@ -32,7 +32,7 @@ and ur done!
 
 <img width="454" height="117" alt="image" src="https://github.com/user-attachments/assets/0006bb7d-eed5-4286-a73e-94d9588d7813" />
 
-
+# I'll add the others when I'm not lazy
 
 
 
