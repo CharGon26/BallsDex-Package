@@ -10,7 +10,7 @@ from ballsdex.core.utils.paginator import FieldPageSource, Pages, TextPageSource
 
 class Leaderboard(commands.Cog):
     """
-    Custom commands for the bot.
+    leaderboard command for the bot.
     """
 
     def __init__(self, bot: commands.Bot):
