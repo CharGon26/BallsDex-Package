@@ -6,7 +6,7 @@ from tortoise.functions import Count
 from ballsdex.core.models import Ball, BallInstance, Player, balls, Special
 from ballsdex.core.utils.paginator import FieldPageSource, Pages, TextPageSource
 
-# This command sends the top 10 players with the most balls in ephemeral.
+# This command sends the top 20 players with the most balls in ephemeral.
 
 class Leaderboard(commands.Cog):
     """
@@ -23,7 +23,7 @@ class Leaderboard(commands.Cog):
         """
         await interaction.response.defer(ephemeral=False, thinking=True)
         
-        players = await Player.annotate(ball_count=Count("balls")).order_by("-ball_count").limit(10)
+        players = await Player.annotate(ball_count=Count("balls")).order_by("-ball_count").limit(20)
         
         if not players:
             await interaction.followup.send("No players found.", ephemeral=False)
@@ -47,14 +47,10 @@ class Leaderboard(commands.Cog):
             
             entries.append((f"{i + 1}. {medal} {user.name}", f"Whos: {player.ball_count}"))
 
-        source = FieldPageSource(entries, per_page=5, inline=False)
-        source.embed.title = "🏆 Top 10 Doctor Who Dex Players 🏆"
+        source = FieldPageSource(entries, per_page=10, inline=False)
+        source.embed.title = "🏆 Top 20 Doctor Who Dex Players 🏆"
         source.embed.color = discord.Color.gold()
         source.embed.set_thumbnail(url=interaction.user.display_avatar.url)
         
         pages = Pages(source=source, interaction=interaction)
         await pages.start(ephemeral=False)
-
-
-async def setup(bot):
-    await bot.add_cog(Leaderboard(bot))
