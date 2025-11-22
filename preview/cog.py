@@ -1,0 +1,102 @@
+import discord
+from discord import app_commands
+from discord.ext import commands
+from ballsdex.settings import settings
+from ballsdex.core.models import Ball, BallInstance, Special, balls, specials
+from ballsdex.core.utils.transformers import BallEnabledTransform
+from ballsdex.core.image_generator.image_gen import draw_card
+import io
+
+# Preview command: Allows previewing card images without owning them.
+
+async def ball_autocomplete(interaction: discord.Interaction, current: str):
+    # Autocomplete for enabled balls
+    matching_balls = [b for b in balls.values() if b.enabled and current.lower() in b.country.lower()]
+    return [app_commands.Choice(name=ball.country, value=str(ball.id)) for ball in matching_balls[:25]]
+
+async def special_autocomplete(interaction: discord.Interaction, current: str):
+    # Autocomplete for all specials (not limited to instances)
+    matching_specials = [s for s in specials.values() if current.lower() in s.name.lower()]
+    return [app_commands.Choice(name=special.name, value=str(special.id)) for special in matching_specials[:25]]
+
+class Preview(commands.Cog):
+    """
+    Preview card images.
+    """
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    @app_commands.command()
+    @app_commands.autocomplete(ball=ball_autocomplete, special=special_autocomplete)
+    async def preview(
+        self,
+        interaction: discord.Interaction,
+        ball: str,
+        special: str = None
+    ):
+        """
+        Preview a card image for a ball, even if you don't own it.
+
+        Parameters
+        ----------
+        ball: str
+            The ball to preview.
+        special: str
+            Optional special version (e.g., shiny).
+        """
+        await interaction.response.defer(ephemeral=False)
+        
+        try:
+            ball_id = int(ball)
+            selected_ball = balls.get(ball_id)
+            if not selected_ball:
+                await interaction.followup.send("Ball not found.", ephemeral=True)
+                return
+        except ValueError:
+            await interaction.followup.send("Invalid ball selection.", ephemeral=True)
+            return
+        
+        # Handle special
+        selected_special = None
+        if special:
+            try:
+                special_id = int(special)
+                selected_special = specials.get(special_id)
+                if not selected_special:
+                    await interaction.followup.send("Special not found.", ephemeral=True)
+                    return
+            except ValueError:
+                await interaction.followup.send("Invalid special selection.", ephemeral=True)
+                return
+        
+        # Create a temporary BallInstance for preview
+        temp_instance = BallInstance(
+            ball=selected_ball,
+            special=selected_special,
+            health_bonus=0,  # Default bonuses
+            attack_bonus=0,
+            favorite=False,
+            tradeable=True,
+            locked=None,
+            extra_data={}
+        )
+        
+        # Generate the card image
+        try:
+            buffer = temp_instance.draw_card()
+            file = discord.File(buffer, "preview_card.webp")
+            
+            embed = discord.Embed(
+                title=f"Preview: {selected_ball.country}",
+                description=f"Special: {selected_special.name if selected_special else 'Default'}",
+                color=discord.Color.blue()
+            )
+            embed.set_image(url="attachment://preview_card.webp")
+            
+            await interaction.followup.send(embed=embed, file=file, ephemeral=False)
+        except Exception as e:
+            await interaction.followup.send(f"Failed to generate preview: {str(e)}. This special may not have artwork yet.", ephemeral=True)
+
+async def setup(bot):
+    await bot.add_cog(Preview(bot))
