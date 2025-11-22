@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from ballsdex.settings import settings
-from ballsdex.core.models import Ball, BallInstance, Special, balls, specials
+from ballsdex.core.models import Ball, BallInstance, Player, Special, balls, specials  # Added Player
 from ballsdex.core.utils.transformers import BallEnabledTransform
 from ballsdex.core.image_generator.image_gen import draw_card
 import io
@@ -70,6 +70,14 @@ class Preview(commands.Cog):
                 await interaction.followup.send("Invalid special selection.", ephemeral=True)
                 return
         
+        # Check ownership
+        player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+        ownership_query = BallInstance.filter(player=player, ball=selected_ball)
+        if selected_special:
+            ownership_query = ownership_query.filter(special=selected_special)
+        owned_count = await ownership_query.count()
+        ownership_text = f"You own {owned_count}" if owned_count > 0 else "Not owned"
+        
         # Create a temporary BallInstance for preview
         temp_instance = BallInstance(
             ball=selected_ball,
@@ -93,6 +101,7 @@ class Preview(commands.Cog):
                 color=discord.Color.blue()
             )
             embed.set_image(url="attachment://preview_card.webp")
+            embed.add_field(name="Ownership", value=ownership_text, inline=True)
             
             await interaction.followup.send(embed=embed, file=file, ephemeral=False)
         except Exception as e:
